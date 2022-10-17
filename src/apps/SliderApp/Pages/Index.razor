@@ -1,0 +1,16 @@
+﻿@inject ILogger<Index> _logger
+@page "/"
+
+<PageTitle>Index</PageTitle>
+<MudSlider Color="Color.Primary" Variant="Variant.Filled" Class="flex-grow-1" Min="100" Max="100_000" Immediate="false" ValueChanged="v=>OnRadiusChanged(v)" Size="Size.Large" ValueLabel="true" TickMarks="false" Step="100" T="int"></MudSlider>
+@code
+{
+    private int FenceRadius = 2000; 
+    
+    private async Task OnRadiusChanged(int radius)
+    {
+        _logger.LogDebug("Change fence radius to {fenceRadius} ...", radius);
+        await Task.Delay(TimeSpan.FromSeconds(1));
+        FenceRadius = radius;
+    }
+}
