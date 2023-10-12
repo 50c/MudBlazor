@@ -7,7 +7,7 @@ using FluentAssertions;
 using MudBlazor.Services;
 using NUnit.Framework;
 
-namespace MudBlazor.UnitTests.Services
+namespace MudBlazor.UnitTests.Services.Browser
 {
 #nullable enable
     [TestFixture]
@@ -16,8 +16,10 @@ namespace MudBlazor.UnitTests.Services
         [Test]
         public void DefaultValues()
         {
+            // Arrange
             var option = new ResizeOptions();
 
+            // Assert
             option.ReportRate.Should().Be(100);
             option.EnableLogging.Should().BeFalse();
             option.SuppressInitEvent.Should().BeTrue();
@@ -70,27 +72,51 @@ namespace MudBlazor.UnitTests.Services
         {
             var option1 = new ResizeOptions
             {
-                BreakpointDefinitions = new Dictionary<string, int>
+                BreakpointDefinitions = new Dictionary<Breakpoint, int>
                 {
-                    { "someKey", 12 },
-                    { "someKey2", 24 },
-                    { "someKey3", 36 },
+                    { Breakpoint.Xl, 12 },
+                    { Breakpoint.Lg, 24 },
+                    { Breakpoint.Md, 36 },
 
                 }
             };
 
             var option2 = new ResizeOptions
             {
-                BreakpointDefinitions = new Dictionary<string, int>
+                BreakpointDefinitions = new Dictionary<Breakpoint, int>
                 {
-                    { "someKey", 12 },
-                    { "someKey2", 24 },
-                    { "someKey3", 36 },
+                    { Breakpoint.Xl, 12 },
+                    { Breakpoint.Lg, 24 },
+                    { Breakpoint.Md, 36 },
                 }
             };
 
             option1.Should().Be(option2);
             option2.Should().Be(option1);
+        }
+
+        [Test]
+        public void Equals_TheSame_BreakpointDefinitions_BothNull()
+        {
+            var option1 = new ResizeOptions { BreakpointDefinitions = null };
+            var option2 = new ResizeOptions { BreakpointDefinitions = null };
+
+            option1.Should().Be(option2);
+            option2.Should().Be(option1);
+        }
+
+        [Test]
+        public void Equals_NotTheSame_OtherNull()
+        {
+            // Arrange
+            var option1 = new ResizeOptions();
+            ResizeOptions? option2 = null;
+
+            // Act
+            var result = option1.Equals(option2);
+
+            // Assert
+            result.Should().BeFalse();
         }
 
         [Test]
@@ -150,17 +176,28 @@ namespace MudBlazor.UnitTests.Services
         }
 
         [Test]
-        public void Equals_NotTheSame_DiffersInBreakpointDefinitions_NullAndNotNull()
+        public void Equals_NotTheSame_DiffersInBreakpointDefinitions_EmptyAndNotEmpty()
         {
             var option1 = new ResizeOptions();
 
             var option2 = new ResizeOptions
             {
-                BreakpointDefinitions = new Dictionary<string, int>
+                BreakpointDefinitions = new Dictionary<Breakpoint, int>
                 {
-                    { "someKey", 12 },
+                    { Breakpoint.Xl, 12 },
                 }
             };
+
+            option1.Should().NotBe(option2);
+            option2.Should().NotBe(option1);
+        }
+
+
+        [Test]
+        public void Equals_NotTheSame_BreakpointDefinitions_EmptyAndNull()
+        {
+            var option1 = new ResizeOptions { BreakpointDefinitions = new Dictionary<Breakpoint, int>() };
+            var option2 = new ResizeOptions { BreakpointDefinitions = null };
 
             option1.Should().NotBe(option2);
             option2.Should().NotBe(option1);
@@ -171,18 +208,18 @@ namespace MudBlazor.UnitTests.Services
         {
             var option1 = new ResizeOptions
             {
-                BreakpointDefinitions = new Dictionary<string, int>
+                BreakpointDefinitions = new Dictionary<Breakpoint, int>
                 {
-                    { "someKey", 12 },
-                    { "someKey2", 24 },
+                    { Breakpoint.Xl, 12 },
+                    { Breakpoint.Lg, 24 },
                 }
             };
 
             var option2 = new ResizeOptions
             {
-                BreakpointDefinitions = new Dictionary<string, int>
+                BreakpointDefinitions = new Dictionary<Breakpoint, int>
                 {
-                    { "someKey", 12 },
+                    { Breakpoint.Xl, 12 },
                 }
             };
 
@@ -195,17 +232,17 @@ namespace MudBlazor.UnitTests.Services
         {
             var option1 = new ResizeOptions
             {
-                BreakpointDefinitions = new Dictionary<string, int>
+                BreakpointDefinitions = new Dictionary<Breakpoint, int>
                 {
-                    { "someKey", 12 },
+                    { Breakpoint.Xl, 12 },
                 }
             };
 
             var option2 = new ResizeOptions
             {
-                BreakpointDefinitions = new Dictionary<string, int>
+                BreakpointDefinitions = new Dictionary<Breakpoint, int>
                 {
-                    { "someKey1", 12 },
+                    { Breakpoint.Lg, 12 },
                 }
             };
 
@@ -218,17 +255,17 @@ namespace MudBlazor.UnitTests.Services
         {
             var option1 = new ResizeOptions
             {
-                BreakpointDefinitions = new Dictionary<string, int>
+                BreakpointDefinitions = new Dictionary<Breakpoint, int>
                 {
-                    { "someKey", 12 },
+                    { Breakpoint.Xl, 12 },
                 }
             };
 
             var option2 = new ResizeOptions
             {
-                BreakpointDefinitions = new Dictionary<string, int>
+                BreakpointDefinitions = new Dictionary<Breakpoint, int>
                 {
-                    { "someKey", 23 },
+                    { Breakpoint.Xl, 23 },
                 }
             };
 
@@ -318,6 +355,64 @@ namespace MudBlazor.UnitTests.Services
 
             // Assert
             result.Should().BeTrue();
+        }
+
+        [Test]
+        public void NotEqualOperator_WhenObjectsAreNotEqual_ReturnsTrue()
+        {
+            // Arrange
+            var options1 = new ResizeOptions();
+            var options2 = new ResizeOptions { ReportRate = 200 };
+
+            // Act
+            var result = options1 != options2;
+
+            // Assert
+            result.Should().BeTrue();
+        }
+
+        [Test]
+        public void NotEqualOperator_WhenObjectsAreEqual_ReturnsFalse()
+        {
+            // Arrange
+            var options1 = new ResizeOptions();
+            var options2 = new ResizeOptions();
+
+            // Act
+            var result = options1 != options2;
+
+            // Assert
+            result.Should().BeFalse();
+        }
+
+        [Test]
+        public void GetHashCode_WhenObjectsAreEqual_ReturnsSameHashCode()
+        {
+            // Arrange
+            var options1 = new ResizeOptions();
+            var options2 = new ResizeOptions();
+
+            // Act
+            var hashCode1 = options1.GetHashCode();
+            var hashCode2 = options2.GetHashCode();
+
+            // Assert
+            hashCode1.Should().Be(hashCode2);
+        }
+
+        [Test]
+        public void GetHashCode_WhenObjectsAreNotEqual_ReturnsDifferentHashCode()
+        {
+            // Arrange
+            var options1 = new ResizeOptions();
+            var options2 = new ResizeOptions { ReportRate = 200 };
+
+            // Act
+            var hashCode1 = options1.GetHashCode();
+            var hashCode2 = options2.GetHashCode();
+
+            // Assert
+            hashCode1.Should().NotBe(hashCode2);
         }
     }
 }

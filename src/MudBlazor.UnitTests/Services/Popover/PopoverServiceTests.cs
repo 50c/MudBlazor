@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using FluentAssertions;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.JSInterop;
@@ -47,7 +46,7 @@ public class PopoverServiceTests
     }
 
     [Test]
-    public async Task IsInitialized_ShouldConnectAutomaticallyAfterCreatePopoverAsync()
+    public async Task IsInitialized_ShouldNotConnectAutomaticallyAfterCreatePopoverAsync()
     {
         // Arrange
         var jsRuntimeMock = Mock.Of<IJSRuntime>();
@@ -61,7 +60,7 @@ public class PopoverServiceTests
         await service.CreatePopoverAsync(popover);
 
         // Assert
-        Assert.IsTrue(service.IsInitialized);
+        Assert.IsFalse(service.IsInitialized);
     }
 
     [Test]
@@ -192,7 +191,7 @@ public class PopoverServiceTests
         popover.PopoverClass = "popoverClass";
         popover.PopoverStyles = "popoverStyle";
         popover.Tag = "my-tag";
-        popover.UserAttributes = new Dictionary<string, object>
+        popover.UserAttributes = new Dictionary<string, object?>
         {
             { "key1", "value1" },
             { "key2", false }
@@ -246,7 +245,7 @@ public class PopoverServiceTests
         popover.PopoverClass = "popoverClass";
         popover.PopoverStyles = "popoverStyle";
         popover.Tag = "my-tag";
-        popover.UserAttributes = new Dictionary<string, object>
+        popover.UserAttributes = new Dictionary<string, object?>
         {
             { "key1", "value1" },
             { "key2", false }
@@ -509,5 +508,29 @@ public class PopoverServiceTests
         // Assert
         Assert.Zero(service.QueueCount);
         Assert.IsEmpty(service.ActivePopovers);
+    }
+
+    [Test]
+    public async Task DisposeAsync_ShouldClearAllObservers()
+    {
+        // Arrange
+        var jsRuntimeMock = Mock.Of<IJSRuntime>();
+        var service = new PopoverService(NullLogger<PopoverService>.Instance, jsRuntimeMock);
+        var popover = new PopoverMock();
+        service.Subscribe(new PopoverObserverMock());
+        service.Subscribe(new PopoverObserverMock());
+        service.Subscribe(new PopoverObserverMock());
+        service.Subscribe(new PopoverObserverMock());
+        service.Subscribe(new PopoverObserverMock());
+        var beforeObserversCount = service.ObserversCount;
+
+        // Act
+        await service.CreatePopoverAsync(popover);
+        await service.DisposeAsync();
+        var afterObserversCount = service.ObserversCount;
+
+        // Assert
+        Assert.AreEqual(5, beforeObserversCount);
+        Assert.Zero(afterObserversCount);
     }
 }

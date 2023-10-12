@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -82,17 +83,22 @@ public class ServiceCollectionExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection()
+            .AddLogging()
             .AddSingleton<IJSRuntime, MockJsRuntime>();
 
         // Act
         services.AddMudBlazorResizeListener();
         var serviceProvider = services.BuildServiceProvider();
+        var browserViewportService = serviceProvider.GetService<IBrowserViewportService>();
+#pragma warning disable CS0618
         var resizeListenerService = serviceProvider.GetService<IResizeListenerService>();
+        var breakpointService = serviceProvider.GetService<IBreakpointService>();
         var browserWindowSizeProvider = serviceProvider.GetService<IBrowserWindowSizeProvider>();
         var resizeService = serviceProvider.GetService<IResizeService>();
-        var breakpointService = serviceProvider.GetService<IBreakpointService>();
+#pragma warning restore CS0618
 
         // Assert
+        Assert.IsNotNull(browserViewportService);
         Assert.IsNotNull(resizeListenerService);
         Assert.IsNotNull(browserWindowSizeProvider);
         Assert.IsNotNull(resizeService);
@@ -104,12 +110,17 @@ public class ServiceCollectionExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection()
+            .AddLogging()
             .AddSingleton<IJSRuntime, MockJsRuntime>();
         ResizeOptions? expectedOptions = null;
 
         // Act
         services.AddMudBlazorResizeListener(options =>
         {
+            options.BreakpointDefinitions = new Dictionary<Breakpoint, int>
+            {
+                { Breakpoint.Lg, 500 }
+            };
             options.EnableLogging = true;
             options.NotifyOnBreakpointOnly = false;
             options.ReportRate = 100;
@@ -117,13 +128,21 @@ public class ServiceCollectionExtensionsTests
             expectedOptions = options;
         });
         var serviceProvider = services.BuildServiceProvider();
+        var browserViewportService = serviceProvider.GetService<IBrowserViewportService>();
+#pragma warning disable CS0618
         var resizeListenerService = serviceProvider.GetService<IResizeListenerService>();
+        var breakpointService = serviceProvider.GetService<IBreakpointService>();
+        var browserWindowSizeProvider = serviceProvider.GetService<IBrowserWindowSizeProvider>();
         var resizeService = serviceProvider.GetService<IResizeService>();
+#pragma warning restore CS0618
         var options = serviceProvider.GetRequiredService<IOptions<ResizeOptions>>();
         var actualOptions = options.Value;
 
         // Assert
+        Assert.IsNotNull(browserViewportService);
         Assert.IsNotNull(resizeListenerService);
+        Assert.IsNotNull(browserWindowSizeProvider);
+        Assert.IsNotNull(breakpointService);
         Assert.IsNotNull(resizeService);
         Assert.IsNotNull(expectedOptions);
         Assert.AreSame(expectedOptions, actualOptions);
@@ -300,6 +319,7 @@ public class ServiceCollectionExtensionsTests
             options.ContainerClass = "container_class";
             options.FlipMargin = 100;
             options.ThrowOnDuplicateProvider = false;
+            options.Mode = PopoverMode.Legacy;
             expectedOptions = options;
         });
         var serviceProvider = services.BuildServiceProvider();
@@ -418,11 +438,13 @@ public class ServiceCollectionExtensionsTests
         var serviceProvider = services.BuildServiceProvider();
         var dialogService = serviceProvider.GetService<IDialogService>();
         var snackBarService = serviceProvider.GetService<ISnackbar>();
+#pragma warning disable CS0618
         var resizeListenerService = serviceProvider.GetService<IResizeListenerService>();
+        var breakpointService = serviceProvider.GetService<IBreakpointService>();
         var browserWindowSizeProvider = serviceProvider.GetService<IBrowserWindowSizeProvider>();
         var resizeService = serviceProvider.GetService<IResizeService>();
-        var breakpointService = serviceProvider.GetService<IBreakpointService>();
-
+#pragma warning restore CS0618
+        var browserViewportService = serviceProvider.GetService<IBrowserViewportService>();
         var resizeObserver = serviceProvider.GetService<IResizeObserver>();
         var resizeObserverFactory = serviceProvider.GetService<IResizeObserverFactory>();
         var keyInterceptor = serviceProvider.GetService<IKeyInterceptor>();
@@ -447,6 +469,7 @@ public class ServiceCollectionExtensionsTests
         Assert.IsNotNull(dialogService);
         Assert.IsNotNull(snackBarService);
         Assert.IsNotNull(resizeListenerService);
+        Assert.IsNotNull(browserViewportService);
         Assert.IsNotNull(browserWindowSizeProvider);
         Assert.IsNotNull(resizeService);
         Assert.IsNotNull(breakpointService);
@@ -498,6 +521,10 @@ public class ServiceCollectionExtensionsTests
             options.SnackbarConfiguration.SnackbarVariant = Variant.Outlined;
 
             // ResizeOptions
+            options.ResizeOptions.BreakpointDefinitions = new Dictionary<Breakpoint, int>
+            {
+                { Breakpoint.Lg, 500 }
+            };
             options.ResizeOptions.EnableLogging = true;
             options.ResizeOptions.NotifyOnBreakpointOnly = false;
             options.ResizeOptions.ReportRate = 100;
@@ -512,17 +539,20 @@ public class ServiceCollectionExtensionsTests
             options.PopoverOptions.ContainerClass = "container_class";
             options.PopoverOptions.FlipMargin = 100;
             options.PopoverOptions.ThrowOnDuplicateProvider = false;
+            options.PopoverOptions.Mode = PopoverMode.Legacy;
 
             expectedOptions = options;
         });
         var serviceProvider = services.BuildServiceProvider();
         var dialogService = serviceProvider.GetService<IDialogService>();
         var snackBarService = serviceProvider.GetService<ISnackbar>();
+#pragma warning disable CS0618
+        var breakpointService = serviceProvider.GetService<IBreakpointService>();
         var resizeListenerService = serviceProvider.GetService<IResizeListenerService>();
         var browserWindowSizeProvider = serviceProvider.GetService<IBrowserWindowSizeProvider>();
         var resizeService = serviceProvider.GetService<IResizeService>();
-        var breakpointService = serviceProvider.GetService<IBreakpointService>();
-
+#pragma warning restore CS0618
+        var browserViewportService = serviceProvider.GetService<IBrowserViewportService>();
         var resizeObserver = serviceProvider.GetService<IResizeObserver>();
         var resizeObserverFactory = serviceProvider.GetService<IResizeObserverFactory>();
         var keyInterceptor = serviceProvider.GetService<IKeyInterceptor>();
@@ -555,6 +585,7 @@ public class ServiceCollectionExtensionsTests
         Assert.IsNotNull(dialogService);
         Assert.IsNotNull(snackBarService);
         Assert.IsNotNull(resizeListenerService);
+        Assert.IsNotNull(browserViewportService);
         Assert.IsNotNull(browserWindowSizeProvider);
         Assert.IsNotNull(resizeService);
         Assert.IsNotNull(breakpointService);
@@ -581,12 +612,12 @@ public class ServiceCollectionExtensionsTests
         Assert.AreEqual(expectedOptions.PopoverOptions.ContainerClass, actualPopoverOptions.ContainerClass);
         Assert.AreEqual(expectedOptions.PopoverOptions.FlipMargin, actualPopoverOptions.FlipMargin);
         Assert.AreEqual(expectedOptions.PopoverOptions.ThrowOnDuplicateProvider, actualPopoverOptions.ThrowOnDuplicateProvider);
+        Assert.AreEqual(expectedOptions.PopoverOptions.Mode, actualPopoverOptions.Mode);
 
         Assert.AreEqual(expectedOptions.ResizeObserverOptions.EnableLogging, actualResizeObserverOptions.EnableLogging);
         Assert.AreEqual(expectedOptions.ResizeObserverOptions.ReportRate, actualResizeObserverOptions.ReportRate);
 
-        //BreakpointDefinitions -- doesn't work as the ResizeListenerService modifying the collection and doesn't care about the set values, this sounds like an unintentional mistake
-        //Assert.AreEqual(expectedOptions.ResizeOptions.BreakpointDefinitions, actualResizeOptions.BreakpointDefinitions);
+        Assert.AreEqual(expectedOptions.ResizeOptions.BreakpointDefinitions, actualResizeOptions.BreakpointDefinitions);
         Assert.AreEqual(expectedOptions.ResizeOptions.EnableLogging, actualResizeOptions.EnableLogging);
         Assert.AreEqual(expectedOptions.ResizeOptions.NotifyOnBreakpointOnly, actualResizeOptions.NotifyOnBreakpointOnly);
         Assert.AreEqual(expectedOptions.ResizeOptions.ReportRate, actualResizeOptions.ReportRate);

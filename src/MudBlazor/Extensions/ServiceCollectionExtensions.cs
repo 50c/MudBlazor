@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using MudBlazor.Interop;
 
 namespace MudBlazor.Services
 {
@@ -104,10 +105,13 @@ namespace MudBlazor.Services
         /// <returns>Continues the IServiceCollection chain.</returns>
         public static IServiceCollection AddMudBlazorResizeListener(this IServiceCollection services)
         {
+#pragma warning disable CS0618
             services.TryAddScoped<IResizeListenerService, ResizeListenerService>();
-            services.TryAddScoped<IBrowserWindowSizeProvider, BrowserWindowSizeProvider>();
             services.TryAddScoped<IResizeService, ResizeService>();
             services.TryAddScoped<IBreakpointService, BreakpointService>();
+            services.TryAddScoped<IBrowserWindowSizeProvider, BrowserWindowSizeProvider>();
+#pragma warning restore CS0618
+            services.TryAddScoped<IBrowserViewportService, BrowserViewportService>();
 
             return services;
         }
@@ -293,6 +297,7 @@ namespace MudBlazor.Services
                 popoverOptions.FlipMargin = options.FlipMargin;
                 popoverOptions.QueueDelay = options.QueueDelay;
                 popoverOptions.ThrowOnDuplicateProvider = options.ThrowOnDuplicateProvider;
+                popoverOptions.Mode = options.Mode;
             });
 
             return services;
@@ -309,7 +314,6 @@ namespace MudBlazor.Services
 
             return services;
         }
-
 
         /// <summary>
         /// Adds ScrollSpy as a transient instance.
@@ -467,6 +471,7 @@ namespace MudBlazor.Services
                     popoverOptions.FlipMargin = options.PopoverOptions.FlipMargin;
                     popoverOptions.QueueDelay = options.PopoverOptions.QueueDelay;
                     popoverOptions.ThrowOnDuplicateProvider = options.PopoverOptions.ThrowOnDuplicateProvider;
+                    popoverOptions.Mode = options.PopoverOptions.Mode;
                 })
                 .AddMudBlazorScrollSpy()
                 .AddMudEventManager()

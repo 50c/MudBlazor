@@ -210,7 +210,17 @@ namespace MudBlazor
                 _ = OnEvaluateForm();
         }
 
-        private void OnTimerComplete(object stateInfo) => InvokeAsync(OnEvaluateForm);
+        private void OnTimerComplete(object stateInfo)
+        {
+            try
+            {
+                InvokeAsync(OnEvaluateForm);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"An error occured while executing {nameof(OnEvaluateForm)}: {e.Message}");
+            }
+        }
 
         private bool _shouldRender = true; // <-- default is true, we need the form children to render
 
@@ -358,6 +368,11 @@ namespace MudBlazor
         public void Dispose()
         {
             _timer?.Dispose();
+            if (ParentMudForm != null)
+            {
+                ParentMudForm.ChildForms.Remove(this);
+                ParentMudForm.EvaluateForm(); // Need this to refresh the form state
+            }
         }
     }
 }
