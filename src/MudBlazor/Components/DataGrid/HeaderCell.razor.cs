@@ -149,12 +149,14 @@ namespace MudBlazor
             {
                 if (!sortable && !filterable && !groupable)
                     return false;
+                if (!sortable && DataGrid.FilterMode == DataGridFilterMode.ColumnFilterRow)
+                    return false;
 
                 return Column?.ShowColumnOptions ?? DataGrid?.ShowColumnOptions ?? true;
             }
         }
 
-        private string sortIconClass
+        internal string sortIconClass
         {
             get
             {
@@ -173,7 +175,7 @@ namespace MudBlazor
             }
         }
 
-        private bool hasFilter
+        internal bool hasFilter
         {
             get
             {
@@ -428,11 +430,13 @@ namespace MudBlazor
         internal void GroupColumn()
         {
             Column?.SetGrouping(true);
+            DataGrid.DropContainerHasChanged();
         }
 
         internal void UngroupColumn()
         {
             Column?.SetGrouping(false);
+            DataGrid.DropContainerHasChanged();
         }
 
         private void MarkAsUnsorted()
