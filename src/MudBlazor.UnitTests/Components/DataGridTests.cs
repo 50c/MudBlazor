@@ -18,6 +18,7 @@ using MudBlazor.UnitTests.TestComponents;
 using NUnit.Framework;
 using static MudBlazor.Docs.Examples.TableRelationalExample;
 using static Bunit.ComponentParameterFactory;
+using MudBlazor.Services;
 
 namespace MudBlazor.UnitTests.Components
 {
@@ -117,7 +118,7 @@ namespace MudBlazor.UnitTests.Components
             await comp.InvokeAsync(() => headerCell.Instance.SortChangedAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs()));
             //await comp.InvokeAsync(() => headerCell.Instance.GetDataType());
             await comp.InvokeAsync(() => headerCell.Instance.RemoveSortAsync());
-            await comp.InvokeAsync(() => headerCell.Instance.AddFilterAsync());
+            await comp.InvokeAsync(() => headerCell.Instance.AddFilter());
             await comp.InvokeAsync(() => headerCell.Instance.OpenFilters());
 
             await comp.InvokeAsync(() => dataGrid.Instance.SortMode = SortMode.None);
@@ -705,7 +706,7 @@ namespace MudBlazor.UnitTests.Components
 
             // Fire RowClick, SelectedItemChanged, SelectedItemsChanged, and StartedEditingItem callbacks.
             dataGrid.FindAll(".mud-table-body tr")[0].Click();
-            
+
             // Fire RowContextMenuClick
             dataGrid.FindAll(".mud-table-body tr")[0].ContextMenu();
 
@@ -723,6 +724,33 @@ namespace MudBlazor.UnitTests.Components
             // but we can brute force it by directly calling the CancelEditingItemAsync method on the datagrid
             await dataGrid.InvokeAsync(dataGrid.Instance.CancelEditingItemAsync);
             comp.Instance.CanceledEditingItem.Should().Be(true);
+        }
+
+        [Test]
+        public async Task DataGridEditComplexPropertyExpressionTest()
+        {
+            var comp = Context.RenderComponent<DataGridEditComplexPropertyExpressionTest>();
+            var dataGrid = comp.FindComponent<MudDataGrid<DataGridEditComplexPropertyExpressionTest.Item>>();
+
+
+            dataGrid.Render();
+
+            // Make sure that the value is as expected before we try to change it
+            comp.Instance.Items[0].Name.Should().Be("A");
+            comp.Instance.Items[0].SubItem.SubProperty.Should().Be("A-D");
+            comp.Instance.Items[0].SubItem.SubItem2.SubProperty2.Should().Be("A-D-E");
+
+            // Edit an item 'normally'
+            dataGrid.FindAll(".mud-table-body tr td input")[0].Change("Test 1");
+            comp.Instance.Items[0].Name.Should().Be("Test 1");
+
+            // Edit an item that has a sub property like x.Something.SomethingElse
+            dataGrid.FindAll(".mud-table-body tr td input")[1].Change("Test 2");
+            comp.Instance.Items[0].SubItem.SubProperty.Should().Be("Test 2");
+
+            // Edit an item that has a sub property like x.Something.SomethingElse.SomethingElseAgain
+            dataGrid.FindAll(".mud-table-body tr td input")[2].Change("Test 3");
+            comp.Instance.Items[0].SubItem.SubItem2.SubProperty2.Should().Be("Test 3");
         }
 
         [Test]
@@ -1754,6 +1782,26 @@ namespace MudBlazor.UnitTests.Components
         }
 
         [Test]
+        public async Task DataGridClickFilterButtonTest()
+        {
+            var comp = Context.RenderComponent<DataGridFiltersTest>();
+            var dataGrid = comp.FindComponent<MudDataGrid<DataGridFiltersTest.Model>>();
+            var filterButton = dataGrid.FindAll(".filter-button")[0];
+
+            // click on the filter button
+            filterButton.Click();
+
+            // check the number of filters displayed in the filters panel is 1
+            comp.FindAll(".filters-panel .mud-grid-item.d-flex").Count.Should().Be(1);
+
+            // click again on the filter button
+            filterButton.Click();
+
+            // check the number of filters displayed in the filters panel is still 1 (no duplicate filter)
+            comp.FindAll(".filters-panel .mud-grid-item.d-flex").Count.Should().Be(1);
+        }
+
+        [Test]
         public async Task DataGridFiltersTest()
         {
             var comp = Context.RenderComponent<DataGridFiltersTest>();
@@ -2362,7 +2410,6 @@ namespace MudBlazor.UnitTests.Components
             dataGrid.FindAll(".mud-table-body .mud-table-row").Count.Should().Be(4);
         }
 
-
         [Test]
         public async Task DataGridServerDataColumnFilterRowTest()
         {
@@ -2381,6 +2428,18 @@ namespace MudBlazor.UnitTests.Components
             callCountText.Markup.Should().Contain("Server call count: 3");
             dataGrid.Render();
             dataGrid.FindAll(".mud-table-body .mud-table-row").Count.Should().Be(4);
+        }
+
+        [Test]
+        public async Task DataGridColumnFilterRowPropertyTest()
+        {
+            var comp = Context.RenderComponent<DataGridColumnFilterRowPropertyTest>();
+
+            Assert.DoesNotThrow(() => comp.FindComponent<MudTextField<string>>());
+            Assert.DoesNotThrow(() => comp.FindComponent<MudNumericField<double?>>());
+            Assert.DoesNotThrow(() => comp.FindComponent<MudSelect<Enum>>());
+            Assert.DoesNotThrow(() => comp.FindComponent<MudSelect<bool?>>());
+            Assert.DoesNotThrow(() => comp.FindComponent<MudDatePicker>());
         }
 
         [Test]
@@ -2432,8 +2491,10 @@ namespace MudBlazor.UnitTests.Components
 
             await cell._cellContext.Actions.ToggleHierarchyVisibilityForItemAsync();
             cell._cellContext.OpenHierarchies.Should().Contain(item);
+            cell._cellContext.IsOpened.Should().Be(true);
             await cell._cellContext.Actions.ToggleHierarchyVisibilityForItemAsync();
             cell._cellContext.OpenHierarchies.Should().NotContain(item);
+            cell._cellContext.IsOpened.Should().Be(false);
         }
 
         [Test]
@@ -3021,7 +3082,7 @@ namespace MudBlazor.UnitTests.Components
             //await comp.InvokeAsync(() => headerCell.Instance.GetDataType());
             await comp.InvokeAsync(() => headerCell.Instance.RemoveSortAsync());
             dataGrid.Instance.FilteringRunCount.Should().Be(initialFilterCount + 7);
-            await comp.InvokeAsync(() => headerCell.Instance.AddFilterAsync());
+            await comp.InvokeAsync(() => headerCell.Instance.AddFilter());
             dataGrid.Instance.FilteringRunCount.Should().Be(initialFilterCount + 8);
             await comp.InvokeAsync(() => headerCell.Instance.OpenFilters());
             dataGrid.Instance.FilteringRunCount.Should().Be(initialFilterCount + 9);
@@ -3178,5 +3239,41 @@ namespace MudBlazor.UnitTests.Components
             columnOptionsSpan.TextContent.Trim().Should().BeEmpty();
         }
 
+        [Test]
+        public async Task ShouldSetIsGenderGroupedToTrueWhenGroupingIsApplied()
+        {
+            // Render the DataGridGroupingTest component for testing.
+            var comp = Context.RenderComponent<DataGridColumnGroupingTest>();
+
+            // Attempt to find the MudPopoverProvider component within the rendered component.
+            // MudPopoverProvider is used to manage popovers in the component, including the grouping popover.
+            var popoverProvider = comp.FindComponent<MudPopoverProvider>();
+            
+            // Assert that initially, before any user interaction, IsGenderGrouped should be false.
+            comp.Instance.IsGenderGrouped.Should().Be(false);
+
+            // Find the button within the 'th' element with class 'gender' that triggers the popover for grouping.
+            var genderHeaderOption = comp.Find("th.gender .mud-menu button");
+
+            // Simulate a click on the gender header group button to open the popover with grouping options.
+            genderHeaderOption.Click();
+
+            // Find all MudListItem components within the popoverProvider. 
+            // These list items represent the individual options within the grouping popover.
+            var listItems = popoverProvider.FindComponents<MudListItem>();
+
+            // Assert that there are exactly 2 list items (options) available in the popover.
+            listItems.Count.Should().Be(2);
+
+            // From the list items found, select the second one which is expected to be the clickable option for grouping.
+            var clickablePopover = listItems[1].Find(".mud-list-item");
+
+            // click on the grouping option to apply grouping to the data grid.
+            clickablePopover.Click();
+
+            // After clicking the grouping option, assert that IsGenderGrouped is now true, indicating that
+            // the action of applying grouping has successfully updated the component's state.
+            comp.Instance.IsGenderGrouped.Should().Be(true);
+        }
     }
 }
