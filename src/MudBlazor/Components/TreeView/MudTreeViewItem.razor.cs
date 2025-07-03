@@ -397,7 +397,7 @@ namespace MudBlazor
         {
             var allChildrenChecked = GetChildItemsRecursive().All(x => x.GetState<bool>(nameof(Selected)));
             var noChildrenChecked = GetChildItemsRecursive().All(x => !x.GetState<bool>(nameof(Selected)));
-            if (allChildrenChecked && _selectedState)
+            if ((allChildrenChecked || !(MudTreeRoot?.AutoSelectChildren ?? true)) && _selectedState)
             {
                 return true;
             }

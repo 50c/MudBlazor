@@ -128,6 +128,15 @@ namespace MudBlazor
         public bool AutoSelectParent { get; set; } = true;
 
         /// <summary>
+        /// If true, selecting an item will result in all children being automatically selected.
+        /// Note: This only has an effect in SelectionMode.MultiSelection.
+        /// </summary>
+        [Parameter]
+        [Category(CategoryTypes.TreeView.Selecting)]
+        public bool AutoSelectChildren { get; set; } = true;
+
+
+        ///<summary>
         /// Expands an item with children if it is clicked anywhere (not just the expand/collapse buttons).
         /// </summary>
         /// <remarks>
@@ -500,15 +509,34 @@ namespace MudBlazor
                 items.Add(clickedItem!);
                 var allSelected = items.All(x => x.GetState<bool>(nameof(MudTreeViewItem<T>.Selected)));
                 // toggle selection of the clickedItem and its children
-                foreach (var item in items.Where(x => x.GetValue() is not null))
+                if (AutoSelectChildren)
                 {
-                    if (allSelected)
+                    foreach (var item in items.Where(x => x.GetValue() is not null))
                     {
-                        _selection.Remove(item.GetValue()!);
+                        if (allSelected)
+                        {
+                            _selection.Remove(item.GetValue()!);
+                        }
+                        else
+                        {
+                            _selection.Add(item.GetValue()!);
+                        }
                     }
-                    else
+                }
+                else
+                {
+                    var isItemSelected= clickedItem.GetState<bool>(nameof(MudTreeViewItem<T>.Selected));
+                    var clickedItemValue=clickedItem.GetValue();
+                    if (clickedItemValue != null)
                     {
-                        _selection.Add(item.GetValue()!);
+                        if (isItemSelected)
+                        {
+                            _selection.Remove(clickedItemValue);
+                        }
+                        else
+                        {
+                            _selection.Add(clickedItemValue);
+                        }
                     }
                 }
                 if (AutoSelectParent)
